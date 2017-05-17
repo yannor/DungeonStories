@@ -3,6 +3,7 @@ package ys.dungeonstories.database.tables;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,23 +34,25 @@ public class TableStories {
         this.handler = handler;
     }
 
-    public void onCreate(SQLiteDatabase db) {
+    public void onCreate(SQLiteDatabase db, List<Story> stories) {
         String CREATE_TABLE_STORIES = "CREATE TABLE " + TABLE_STORIES + "("
-                + KEY_STORY_ID + " INTEGER PRIMARY KEY NOT NULL, " + KEY_STORY_NAAM + " TEXT NOT NULL, " +
+                + KEY_STORY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " + KEY_STORY_NAAM + " TEXT NOT NULL, " +
                 KEY_STORY_STORY + " TEXT, " + KEY_STORY_UNLOCKED  + " INTEGER, " + KEY_STORY_PASSWORD + " TEXT)";
 
         db.execSQL(CREATE_TABLE_STORIES);
+
+      addMultipleStories(db, stories);
     }
 
-    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion, List<Story> stories) {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_STORIES);
-        onCreate(db);
+        onCreate(db, stories);
     }
 
     public List<Story> getAllStories() {
         List<Story> listStories = new ArrayList<Story>();
         // Select All Query
-        String selectQuery = "SELECT  * FROM " + TABLE_STORIES + " WHERE " + KEY_STORY_UNLOCKED + " = 0";
+        String selectQuery = "SELECT  * FROM " + TABLE_STORIES + " WHERE " + KEY_STORY_UNLOCKED + " = 1";
 
         SQLiteDatabase db = this.handler.getWritableDatabase();
         Cursor cursor = db.rawQuery(selectQuery, null);
@@ -58,17 +61,18 @@ public class TableStories {
         if (cursor.moveToFirst()) {
             do {
                 Story story = new Story(cursor.getString(1), cursor.getString(2));
-
                 listStories.add(story);
             } while (cursor.moveToNext());
         }
+
+
         return listStories;
     }
 
     public List<Story> getAllStoriesPassword(String password) {
         List<Story> listStories = new ArrayList<Story>();
         // Select All Query
-        String selectQuery = "SELECT  * FROM " + TABLE_STORIES + " WHERE " + KEY_STORY_PASSWORD + " = " + password;
+        String selectQuery = "SELECT  * FROM " + TABLE_STORIES + " WHERE " + KEY_STORY_PASSWORD + " = '" + password + "'";
 
         SQLiteDatabase db = this.handler.getWritableDatabase();
         Cursor cursor = db.rawQuery(selectQuery, null);
@@ -108,9 +112,25 @@ public class TableStories {
             story = null;
         }
         return story;
-    } 
+    }
+
+public void addMultipleStories(SQLiteDatabase db, List<Story> stories)
+{
+
+    for (Story s: stories)
+    {
+        ContentValues values = new ContentValues();
+        values.put(KEY_STORY_NAAM, s.getsTitle());
+        values.put(KEY_STORY_STORY, s.getsStory());
+        values.put(KEY_STORY_PASSWORD, s.getsPassword());
+        values.put(KEY_STORY_UNLOCKED, s.getbUnlocked());
+
+        // Inserting Row
+        db.insert(TABLE_STORIES, null, values);
+    }
 
 
+}
 
     public void addStory(Story story) {
         SQLiteDatabase db = this.handler.getWritableDatabase();
@@ -128,7 +148,6 @@ public class TableStories {
 
         db.close(); // Closing database connection
     }
-
 
 
     public void deleteStory(Story story) {

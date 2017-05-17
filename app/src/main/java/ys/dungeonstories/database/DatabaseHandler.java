@@ -14,6 +14,7 @@ import ys.dungeonstories.domain.Story;
  */
 
 public class DatabaseHandler extends SQLiteOpenHelper {
+    InitialStories initStories;
 
     // DatabaseHandler Version
     public static final int DATABASE_VERSION = 1;
@@ -27,19 +28,20 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
     public DatabaseHandler(Context context) {
         super(context, DatabaseHandler.DATABASE_NAME, null, DatabaseHandler.DATABASE_VERSION);
+        initStories = new InitialStories();
         tableStories = new TableStories(this);
     }
 
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        tableStories.onCreate(db);
+        tableStories.onCreate(db, initStories.getStories());
 
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        tableStories.onUpgrade(db, oldVersion, newVersion);
+        tableStories.onUpgrade(db, oldVersion, newVersion, initStories.getStories());
 
     }
 
@@ -62,7 +64,6 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     public Story getStory(int id) {
         return tableStories.getStory(id);
     }
-
 
 
     public void addStory(Story story) {
